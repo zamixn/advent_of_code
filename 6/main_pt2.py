@@ -1,9 +1,13 @@
 fileLines = open("input.txt", 'r').readlines()
 fishes = [int(x) for x in fileLines[0].split(',')]
+counts = {x:fishes.count(x) for x in range(0, 10)}
 
 for day in range(0, 256):
-    print(day)
-    fishes.extend([9 for x in range(0, fishes.count(0))])
-    fishes = [x - 1 if x > 0 else 6 if x == 0 else x for x in fishes]
+    counts[9] += counts[0]
+    counts[7] += counts[0]
+    counts[0] = 0
+    for i in range(0, 9):
+        counts[i] += counts[i + 1]
+        counts[i + 1] = 0
 
-print(len(fishes))
+print(sum([counts[x] for x in range(0, 9)]))
