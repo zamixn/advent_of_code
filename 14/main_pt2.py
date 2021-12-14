@@ -1,25 +1,23 @@
-from anytree import Node, RenderTree
-
-data = open("input_test.txt", 'r').readlines()
+import math
+data = open("input.txt", 'r').readlines()
 template = data[0].rstrip()
-pairDict = [data[x].rstrip() for x in range(2, len(data))]
-pairDict = {p.split(' -> ')[0]:p.split(' -> ')[1] for p in pairDict}
+pairDict = {i[:2]:i[-2] for i in data[2:]}
+count = {i:template.count(i) for i in pairDict.keys()}
 
-template = [template[i: i+2: 1] for i in range(0, len(template) - 1)]
+for step in range(0, 40):
+    countCopy = count.copy()
+    for k, v in count.items():
+        if count[k] > 0:
+            countCopy[k] -= v
+            countCopy[k[0] + pairDict[k]] += v
+            countCopy[pairDict[k] + k[1]] += v
+    count = countCopy
 
-root = Node('root')
-nodes = [Node(x, parent=root) for x in template]
+charCounts = {x:0 for x in set(''.join(count.keys()))}
 
-for step in range(0, 2):
-    for node in nodes:
-        nodesToAdd = []
-        if node.name in pairDict:
-            nodesToAdd.append(Node(node.name[0] + pairDict[node.name], parent=node))
-            nodesToAdd.append(Node(pairDict[node.name] + node.name[1], parent=node))
+for k, v in count.items():
+    charCounts[k[0]] += v/2
+    charCounts[k[1]] += v/2
 
-    nodes = nodesToAdd
-
-
-for pre, fill, node in RenderTree(root):
-    print("%s%s" % (pre, node.name))
-
+answerFloat = max(charCounts.values()) - min(charCounts.values())
+print(math.ceil(answerFloat))
