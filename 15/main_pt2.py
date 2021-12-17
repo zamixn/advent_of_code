@@ -1,73 +1,85 @@
-class Node:
-    def __init__(self, value=None, nextNode=None):
-        self.value = value
-        self.next = nextNode
-
-    def toString(self):
-        return self.value
-
-class SLinkedList:
-    def __init__(self, headNode):
-        self.head = headNode
-        self.end = headNode
-        self.histogram = { headNode.value:1 }
-
-    def print(self):
-        node = self.head
-        s = node.toString() + " -> "
-        while node.next != None:
-            node = node.next
-            s += node.toString() + " -> "
-        print(s)
-
-    def append(self, value):
-        self.end.next = value
-        self.end = value
-        self.histogram[value.value] = 1 if value.value not in self.histogram else (self.histogram[value.value] + 1)
-
-    def insert(self, node, value):
-        prevNext = node.next
-        node.next = value
-        value.next = prevNext
-        self.histogram[value.value] = 1 if value.value not in self.histogram else (self.histogram[value.value] + 1)
-
-    def count(self, value):
-        return self.histogram[0] if value in self.histogram else 0
-
-
-
-
-      
 data = open("input.txt", 'r').readlines()
-template = data[0].rstrip()
-pairDict = [data[x].rstrip() for x in range(2, len(data))]
-pairDict = {p.split(' -> ')[0]:p.split(' -> ')[1] for p in pairDict}
+templateMaze = [[int(i) for i in x.rstrip()] for x in data]
 
-list = SLinkedList(Node(template[0]))
-for i in range(1, len(template)):
-    list.append(Node(template[i]))
+def printMatrix(matrix):
+  print('\n'.join([''.join(['{:1}'.format(item) for item in row]) 
+    for row in matrix]))
 
+def clamp(x, k):
+    return (x + k - 1) % 9 + 1
 
-for step in range(0, 40):
-    print(step)
-    nodesToInsert = {}
-    node = list.head
-    while node.next != None:
-        pair = node.value + node.next.value
+maze = [row[:] for row in templateMaze]
+for y in range(0, len(maze)):
+    for i in range(0, 4):
+        maze[y].extend([clamp(x, i + 1) for x in templateMaze[y]])
+templateMaze = [row[:] for row in maze]
 
-        if pair in pairDict:
-            nodesToInsert[node] = Node(pairDict[pair])
+for i in range(0, 4):
+    maze.extend([[clamp(x, i + 1) for x in row] for row in templateMaze])
 
-        node = node.next
+def printOpen(maze, openList):
+  print('\n'.join([''.join(['{:1}'.format('+' if [y,x] in openList else '.') for x in range(0, len(maze[0]))]) 
+    for y in range(0, len(maze))]))
 
-    for node in nodesToInsert:
-        list.insert(node, nodesToInsert[node])
+def Backtrack(pos, maze, cameFrom):
+  path = [pos]
+  while pos != [0, 0]:
+    path.append(cameFrom[pos[0]][pos[1]])
+    pos = cameFrom[pos[0]][pos[1]]
+  return path[::-1]
 
+def printPath(path, maze):
+  print('\n'.join([''.join(['{:1}'.format('+' if [y,x] in path else '.') for x in range(0, len(maze[0]))]) 
+    for y in range(0, len(maze))]))
 
-#list.print()
+maxY = len(maze)
+maxX = len(maze[0])
 
-print(list.histogram)
-max = list.histogram[max(list.histogram, key = lambda x: list.histogram[x])]
-min = list.histogram[min(list.histogram, key = lambda x: list.histogram[x])]
-print(max - min)
+openList = []
+closedList = []
+cameFrom = [[[] for x in range(0, maxX)] for y in range(0, maxY)]
+riskUpTo = [[999999 for x in range(0, maxX)] for y in range(0, maxY)]
+riskUpTo[0][0] = 0
 
+openList.append([0, 0])
+
+while len(openList) > 0:
+  current = min(openList, key = lambda x: riskUpTo[x[0]][x[1]])
+
+  if current == [maxY - 1, maxX - 1]:
+    print("found path from [0, 0] to " + str(current))
+    break
+
+  openList.remove(current)
+  closedList.append(current)
+
+  currentRisk = riskUpTo[current[0]][current[1]]
+
+  for i in [[0, 1], [0, -1], [1, 0], [-1, 0]]:
+    childIndex = [current[0] + i[0], current[1] + i[1]]
+
+    if childIndex in closedList:
+      continue
+
+    if (childIndex[0] < 0 or childIndex[0] > maxY - 1 or
+        childIndex[1] < 0 or childIndex[1] > maxX - 1):
+      continue
+
+    risk = currentRisk + maze[childIndex[0]][childIndex[1]]
+    if riskUpTo[childIndex[0]][childIndex[1]] <= risk:
+      continue
+
+    openList.append(childIndex)
+    cameFrom[childIndex[0]][childIndex[1]] = [current[0], current[1]]
+    riskUpTo[childIndex[0]][childIndex[1]] = risk
+  
+  #printOpen(maze, openList)
+  #print('\n\n')
+        
+#printMatrix(maze)
+
+#path = Backtrack([maxY - 1, maxX - 1], maze, cameFrom)
+#printPath(path, maze)
+#path.remove([0,0])
+risk = riskUpTo[maxY - 1][maxX - 1]
+print(risk)
