@@ -1,7 +1,3 @@
-data = open("input_test.txt", 'r').readlines()
-hexData = [int(x, 16) for x in data[0]]
-binaryData = [x for x in "".join(["{0:04b}".format(h) for h in hexData])]
-
 class Packet:
     def __init__(self, version, typeID):
           self.version = version
@@ -13,6 +9,8 @@ class Literal(Packet):
           self.version = version
           self.typeID = typeID
           self.literal = literal
+    def SumVersions(self):
+          return self.version
 
 class Operator(Packet): 
     def __init__(self, version, typeID, packets):
@@ -21,7 +19,9 @@ class Operator(Packet):
           self.packets = packets
 
     def SumVersions(self):
-          return self.version
+          vsum = self.version
+          vsum += sum([packet.SumVersions() for packet in self.packets])
+          return vsum
       
 
 def ReadBinary(data, length):
@@ -46,16 +46,12 @@ def ReadOperator(data):
 
       if lengthTypeID == 0:
             subPacketLength = ReadBinaryAsInt(data, 15)
-            print("lengthTypeID: " + str(lengthTypeID) + "; subPacketLength: " + str(subPacketLength))
-
             subpacketsData = data[0:subPacketLength]
             del data[0:subPacketLength]
             while len(subpacketsData) > 0:
                   packets.extend(ReadPacket(subpacketsData))
       else:           
             subpacketCount = ReadBinaryAsInt(data, 11)     
-            print("lengthTypeID: " + str(lengthTypeID) + "; subpacketCount: " + str(subpacketCount))
-
             for i in range(0, subpacketCount):
                   packets.extend(ReadPacket(data))
       return packets
@@ -65,17 +61,19 @@ def ReadPacket(data):
       packets = []
       version = ReadBinaryAsInt(data, 3)
       typeID = ReadBinaryAsInt(data, 3)
-
-      print("version: " + str(version) + "; typeID: " + str(typeID))
       
       if typeID == 4:
             literal = ReadLiteral(data)
-            print("literal: " + str(literal))
             packets.append(Literal(version, typeID, literal))
       else:
             packets.append(Operator(version, typeID, ReadOperator(data)))
 
       return packets
 
+data = open("input.txt", 'r').readlines()
+hexData = [int(x, 16) for x in data[0]]
+binaryData = [x for x in "".join(["{0:04b}".format(h) for h in hexData])]
+
 packets = ReadPacket(binaryData)
-print(packets)
+vsum = sum([packet.SumVersions() for packet in packets])
+print(vsum)
