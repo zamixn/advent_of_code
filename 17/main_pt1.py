@@ -19,8 +19,6 @@ def CanStillReachTargetArea(pos, velocity, targetAreaCenter):
   posCopy = pos.copy()
   AddToArray(posCopy, velocity)
   d1 = Distance(posCopy, targetAreaCenter)
-  #print(d0)
-  #print(d1)
   return pos[0] <= posCopy[0] or d1 < d0
 
 def IsInArea(pos, area):
@@ -36,15 +34,11 @@ for velocity in velocities:
   while CanStillReachTargetArea(pos, velocity, targetAreaCenter) == True:
     AddToArray(pos, velocity)
     AddToArray(velocity, [-1, (-1 if velocity[1] > 0 else (1 if velocity[1] < 0 else 0))])
-    #print(pos)
-    #print(velocity)
-    #print('\n\n')
 
     if maxY < pos[0]:
       maxY = pos[0]
 
     if IsInArea(pos, targetArea):
-      #print("target reached; maxY: " + str(maxY))
       maxYs[maxY] = velocity
       break
 
